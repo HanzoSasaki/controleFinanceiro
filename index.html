@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão de Boletos, Entradas e Funcionários</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- jsPDF e AutoTable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Gestão de Boletos, Entradas e Funcionários</h1>
+
+    <div class="forms">
+      <!-- Entrada Diária -->
+      <div class="form-container">
+        <h2>Registrar Entrada Diária</h2>
+        <form id="entradaForm">
+          <label for="valorEntrada">Valor da Entrada:</label>
+          <input type="number" id="valorEntrada" required step="0.01">
+          <button type="submit">Adicionar Entrada</button>
+        </form>
+      </div>
+
+      <!-- Cadastro de Boletos -->
+      <div class="form-container">
+        <h2>Adicionar Boleto</h2>
+        <form id="boletoForm">
+          <label for="nomeBoleto">Nome do Boleto:</label>
+          <input type="text" id="nomeBoleto" required>
+
+          <label for="valorBoleto">Valor:</label>
+          <input type="number" id="valorBoleto" required step="0.01">
+
+          <label for="vencimentoBoleto">Data de Vencimento:</label>
+          <input type="date" id="vencimentoBoleto" required>
+
+          <label for="statusBoleto">Status:</label>
+          <select id="statusBoleto" required>
+            <option value="pendente" selected>Pendente</option>
+            <option value="pago">Pago</option>
+          </select>
+
+          <button type="submit">Adicionar Boleto</button>
+        </form>
+      </div>
+
+      <!-- Cadastro de Funcionários -->
+      <div class="form-container">
+        <h2>Adicionar Funcionário</h2>
+        <form id="funcionarioForm">
+          <label for="nomeFuncionario">Nome do Funcionário:</label>
+          <input type="text" id="nomeFuncionario" required>
+          <label for="salarioFuncionario">Salário:</label>
+          <input type="number" id="salarioFuncionario" required step="0.01">
+          <button type="submit">Adicionar Funcionário</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Lista de Entradas Diárias -->
+    <div class="entradas-list">
+      <h2>Entradas Diárias</h2>
+      <table id="entradasTable">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Valor</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Lista de Funcionários -->
+    <div class="funcionarios-list">
+      <h2>Lista de Funcionários</h2>
+      <table id="funcionariosTable">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Salário</th>
+            <th>Pagamento</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Painel de Resumo Financeiro -->
+    <div class="resumo">
+      <h2>Resumo Financeiro</h2>
+      <p id="totalEntradas" class="negrito">Total de Entradas: R$ 0.00</p>
+      <p id="saldoDisponivel">Saldo Disponível (após reservar R$10.000): R$ 0.00</p>
+      <p id="totalBoletosPendentes">Total Boletos Pendentes: R$ 0.00</p>
+      <p id="totalBoletosPagos">Total Boletos Pagos: R$ 0.00</p>
+      <p id="dividaTotal" class="divida">Dívida Total: R$ 0.00</p>
+      <p id="saldoFinal">Saldo Final: R$ 0.00</p>
+      <p id="totalSalarios">Total Salários: R$ 0.00</p>
+      <p id="dataPagamentoFuncionarios">
+        Dia Útil para Pagamento dos Funcionários: <span id="diaPagamentoFuncionarios"></span>
+      </p>
+    </div>
+
+    <!-- Resumo de Pagamentos Automático -->
+    <div class="filtro-data">
+      <h2>Resumo de Pagamentos</h2>
+      <p id="totalPagamentosAteData">Total a Pagar até hoje: R$ 0.00</p>
+      <p id="pagamentoAtrasado">Atrasados: R$ 0.00</p>
+      <p id="pagamentoUrgente">Urgentes: R$ 0.00</p>
+      <p id="pagamentoTranquilo">Tranquilos: R$ 0.00</p>
+      <p id="gastoSemana">Gasto na Semana: R$ 0.00</p>
+      <p id="gastoMes">Gasto no Mês: R$ 0.00</p>
+    </div>
+    <!-- Lista Completa de Boletos -->
+    <div class="boleto-list">
+      <h2>Lista de Boletos</h2>
+      <table id="boletoTable">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Valor</th>
+            <th>Vencimento</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Botão para Gerar Relatório PDF -->
+    <div class="gerar-pdf">
+      <button id="gerarPDF">Gerar Relatório PDF</button>
+    </div>
+  </div>
+
+  <!-- Modal de Aviso para Cadastro de Boleto -->
+  <div id="modalAviso" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <p>Por favor, verifique os dados do boleto antes de confirmar o cadastro. Essa informação será utilizada para cálculos.</p>
+      <div class="modal-buttons">
+        <button id="confirmarBoleto" class="action-btn">Confirmar</button>
+        <button id="cancelarBoleto" class="action-btn">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
